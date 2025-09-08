@@ -1,0 +1,65 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name:  devtron-cluster-managed
+  region: ap-south-1
+  version: "1.33"
+
+# use the below configurations if you want to use an existing vpc
+
+# vpc:
+#   id: "vpc-xxxxxxx"
+#   subnets:
+#     private:
+#       ap-south-1a:
+#           id: "subnet-xxxxxxx"
+#       ap-south-1b:
+#           id: "subnet-xxxxxxx"
+
+#     public:
+#       public-ap-south-1a:
+#           id: "subnet-xxxxxxx"
+#       public-ap-south-1b:
+#           id: "subnet-xxxxxxx"
+
+
+addons:
+  - name: aws-ebs-csi-driver
+    wellKnownPolicies:
+      ebsCSIController: true
+    configurationValues: |
+      {
+        "defaultStorageClass": {
+          "enabled": true
+        }
+      }
+
+managedNodeGroups:
+  - name: karpentor-ng
+    privateNetworking: true
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 6
+    instanceTypes: ["c6a.2xlarge"]
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+        - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
+        - arn:aws:iam::aws:policy/AmazonSSMManagedEC2InstanceDefaultPolicy
+        - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+        - arn:aws:iam::xxxxxxxxxxxxx:policy/devtron-cluster-IAM-policy
+    ssh:
+      allow: true
+      publicKeyName: "infra"
+      enableSsm: true
+    volumeSize: 50
+    asgSuspendProcesses: ["AZRebalance"]
+    tags:
+      Component : devtron-ng-managed
+      
